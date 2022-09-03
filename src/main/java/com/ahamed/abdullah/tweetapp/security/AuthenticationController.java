@@ -114,7 +114,7 @@ public class AuthenticationController {
     }
 
 
-    @GetMapping("sign-out")
+    @PostMapping("sign-out")
     public ResponseEntity<?> signout(@RequestBody @Valid RefreshTokenRequest refreshTokenRequest) {
         tokenRepository.deleteByToken(refreshTokenRequest.getRefreshToken());
         return ResponseEntity.ok().build();
