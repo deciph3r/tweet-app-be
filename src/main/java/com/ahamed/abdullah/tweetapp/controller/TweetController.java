@@ -1,8 +1,10 @@
 package com.ahamed.abdullah.tweetapp.controller;
 
 import com.ahamed.abdullah.tweetapp.kafka.Producer;
+import com.ahamed.abdullah.tweetapp.model.Like;
 import com.ahamed.abdullah.tweetapp.model.Tweet;
 import com.ahamed.abdullah.tweetapp.model.User;
+import com.ahamed.abdullah.tweetapp.repository.LikeRepository;
 import com.ahamed.abdullah.tweetapp.repository.TweetRepository;
 import com.ahamed.abdullah.tweetapp.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/")
@@ -34,10 +37,17 @@ public class TweetController {
     UserRepository userRepository;
 
 
+    @Autowired
+    LikeRepository likeRepository;
+
+
     @GetMapping("all")
     public List<Tweet> getAllTweets(){
-        return tweetRepository.findAll(Sort.by(Sort.Direction.DESC,"postTime"));
-
+        return tweetRepository.findAll(Sort.by(Sort.Direction.DESC,"postTime")).parallelStream().map((e)-> {
+            e.setLikes(likeRepository.countByLikedTweet(e.getId()));
+            return e;
+        }
+        ).collect(Collectors.toList());
     }
 
     @GetMapping("{username}")
@@ -81,14 +91,28 @@ public class TweetController {
 
     @PutMapping("{username}/like/{id}")
     public ResponseEntity<String> likeTweet(@PathVariable String id) throws Exception{
-        Optional<Tweet> tweet = tweetRepository.findById(id);
-        if(tweet.isEmpty()){
+
+        if(!tweetRepository.existsById(id)){
             throw new Exception("tweet doesnot exist");
         }
-        Tweet updateTweet = tweet.get();
-        updateTweet.setLikes(updateTweet.getLikes() + 1);
-        Tweet save = tweetRepository.save(updateTweet);
-        producer.sendMessage(save.getTweet());
+        if(likeRepository.existsByLikedTweetAndLikedBy(new ObjectId(id),SecurityContextHolder.getContext().getAuthentication().getName())){
+            throw new Exception("already liked by the user");
+        }
+        Like like = new Like();
+        like.setLikedTweet(new ObjectId(id));
+        like.setLikedBy(SecurityContextHolder.getContext().getAuthentication().getName());
+        likeRepository.save(like);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("{username}/unlike/{id}")
+    public ResponseEntity<String> unlikeTweet(@PathVariable String id) throws Exception{
+
+        if(!tweetRepository.existsById(id)){
+            throw new Exception("tweet doesnot exist");
+        }
+        likeRepository.deleteByLikedTweetAndLikedBy(new ObjectId(id),SecurityContextHolder.getContext().getAuthentication().getName());
+
         return ResponseEntity.ok().build();
     }
 
@@ -134,6 +158,11 @@ public class TweetController {
             throw new Exception("Tweet Does Not Exist");
         }
         return ResponseEntity.ok(oTweet.get());
+    }
+
+    @GetMapping("tweet/likedBy/{id}")
+    public ResponseEntity<Boolean> isLikedByUser(@PathVariable String id) throws  Exception{
+        return ResponseEntity.ok().body(likeRepository.existsByLikedTweetAndLikedBy(new ObjectId(id),SecurityContextHolder.getContext().getAuthentication().getName()));
     }
 
 }
