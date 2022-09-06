@@ -10,4 +10,5 @@ public interface LikeRepository extends MongoRepository<Like, ObjectId> {
     void deleteByLikedTweetAndLikedBy(ObjectId id,String username);
 
     Boolean existsByLikedTweetAndLikedBy(ObjectId id,String username);
+    void deleteAllByLikedTweet(ObjectId id);
 }

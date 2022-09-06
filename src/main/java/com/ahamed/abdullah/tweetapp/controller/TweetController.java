@@ -81,6 +81,11 @@ public class TweetController {
             throw new Exception("tweet doesnot exist");
         }
         Tweet updateTweet = oTweet.get();
+        String actionBy = SecurityContextHolder.getContext().getAuthentication().getName();
+        if(!updateTweet.getUsername().contentEquals(actionBy)){
+            log.info("{}",actionBy.contentEquals(updateTweet.getUsername()));
+            throw new Exception("unauthorized");
+        }
         updateTweet.setTweet(tweet.getTweet());
         updateTweet.setTweetTag(tweet.getTweetTag());
         updateTweet.setPostTime(Instant.now().getEpochSecond());
@@ -118,11 +123,19 @@ public class TweetController {
 
     @DeleteMapping("{username}/delete/{id}")
     public ResponseEntity<String> deleteTweet(@PathVariable String id) throws Exception{
+        Optional<Tweet> oTweet = tweetRepository.findById(id);
 
-        if(!tweetRepository.existsById(id)){
+        if(oTweet.isEmpty()){
             throw new Exception("tweet doesnot exist");
         }
+
+        Tweet tweet = oTweet.get();
+        String actionBy = SecurityContextHolder.getContext().getAuthentication().getName();
+        if(!tweet.getUsername().contentEquals(actionBy)){
+            throw new Exception("unauthorized");
+        }
         tweetRepository.deleteById(id);
+        likeRepository.deleteAllByLikedTweet(new ObjectId(id));
 
         return ResponseEntity.ok().build();
     }
