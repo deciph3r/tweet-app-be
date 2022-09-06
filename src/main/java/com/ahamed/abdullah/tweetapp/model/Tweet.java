@@ -7,13 +7,10 @@ import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.NotBlank;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Document(collection = "tweets")
