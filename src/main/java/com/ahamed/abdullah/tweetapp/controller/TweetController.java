@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/")
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000")
 public class TweetController {
     @Autowired
     Producer producer;

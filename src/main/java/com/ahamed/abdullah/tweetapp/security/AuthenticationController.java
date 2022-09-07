@@ -26,7 +26,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/")
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000")
 public class AuthenticationController {
 
     @Autowired
