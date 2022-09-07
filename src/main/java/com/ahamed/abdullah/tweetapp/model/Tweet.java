@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.bson.types.ObjectId;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.Id;
@@ -32,4 +33,6 @@ public class Tweet {
     @JsonSerialize(using = ToStringSerializer.class)
     private ObjectId repliedTo;
     private List<@Length(max=50,message = "Tweet-Tag cannot exceed 50 character") String> tweetTag;
+    private boolean isLikedByUser;
+    private String repliedToMessage;
 }

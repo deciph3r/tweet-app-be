@@ -39,12 +39,18 @@ public class TweetController {
     @Autowired
     LikeRepository likeRepository;
 
-
     @GetMapping("all")
     public List<Tweet> getAllTweets(){
         log.info("Retrieving all Tweets from the DB");
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return tweetRepository.findAll(Sort.by(Sort.Direction.DESC,"postTime")).parallelStream().map((e)-> {
             e.setLikes(likeRepository.countByLikedTweet(e.getId()));
+            e.setLikedByUser(likeRepository.existsByLikedTweetAndLikedBy(e.getId(),username));
+            if(e.getRepliedTo()!=null) {
+                Tweet deletedTweet = new Tweet();
+                deletedTweet.setTweet("Tweet Got Deleted");
+                e.setRepliedToMessage(tweetRepository.findById(e.getRepliedTo().toString()).orElse(deletedTweet).getTweet());
+            }
             return e;
         }
         ).collect(Collectors.toList());
@@ -53,7 +59,18 @@ public class TweetController {
     @GetMapping("{username}")
     public List<Tweet> getAllTweetsOfUser(@PathVariable String username){
         log.info("Retrieving all tweets of {} from DB",username);
-        return tweetRepository.findByUsernameOrderByPostTimeDesc(username);
+        String requestedUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        return tweetRepository.findByUsernameOrderByPostTimeDesc(username).parallelStream().map((e)-> {
+                    e.setLikes(likeRepository.countByLikedTweet(e.getId()));
+                    e.setLikedByUser(likeRepository.existsByLikedTweetAndLikedBy(e.getId(),requestedUser));
+                    if(e.getRepliedTo()!=null) {
+                        Tweet deletedTweet = new Tweet();
+                        deletedTweet.setTweet("Tweet Got Deleted");
+                        e.setRepliedToMessage(tweetRepository.findById(e.getRepliedTo().toString()).orElse(deletedTweet).getTweet());
+                    }
+                    return e;
+                }
+        ).collect(Collectors.toList());
     }
 
     @GetMapping("users/all")
@@ -178,22 +195,6 @@ public class TweetController {
         producer.sendMessage(save.getTweet());
 
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("tweet/{id}")
-    public ResponseEntity<Tweet> getTweet(@PathVariable String id) throws  Exception{
-        log.info("Retrieving a Tweet with it's Id");
-        Optional<Tweet> oTweet = tweetRepository.findById(id);
-        if(oTweet.isEmpty()){
-            throw new Exception("Tweet Does Not Exist");
-        }
-        return ResponseEntity.ok(oTweet.get());
-    }
-
-    @GetMapping("tweet/likedBy/{id}")
-    public ResponseEntity<Boolean> isLikedByUser(@PathVariable String id) throws  Exception{
-        log.info("Finding if a tweet is liked by the user");
-        return ResponseEntity.ok().body(likeRepository.existsByLikedTweetAndLikedBy(new ObjectId(id),SecurityContextHolder.getContext().getAuthentication().getName()));
     }
 
 }
