@@ -58,9 +58,6 @@ public class CustomUserDetails implements UserDetails {
         return true;
     }
 
-    public String getResetKey(){
-        return user.getResetKey();
-    }
 
     public String getFirstName(){
         return user.getFirstName();

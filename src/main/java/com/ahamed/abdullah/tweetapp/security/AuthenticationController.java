@@ -53,7 +53,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("login")
-    public ResponseEntity login(@RequestBody @Valid LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {
         try {
             Authentication authenticate = authenticationManager
                     .authenticate(
@@ -82,7 +82,6 @@ public class AuthenticationController {
         User newUser = new User();
         newUser.setUsername(userRequest.getUsername());
         newUser.setPassword(userRequest.getPassword());
-        newUser.setResetKey(userRequest.getResetKey());
         newUser.setFirstName(userRequest.getFirstName());
         newUser.setLastName(userRequest.getLastName());
         newUser.setEmail(userRequest.getEmail());
@@ -91,25 +90,9 @@ public class AuthenticationController {
         return ResponseEntity.accepted().build();
     }
 
-    @PostMapping("changePassword")
-    public ResponseEntity<?> changePassword(@RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
-        customUserDetailsManager.changePassword(changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword());
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("{username}/forget")
-    public ResponseEntity<?> forgetPassword(@PathVariable String username,@RequestBody ForgetPasswordRequest forgetPasswordRequest) throws Exception{
-        Optional<User> optionalUser = userRepository.findByUsername(username);
-        if(optionalUser.isEmpty()){
-            throw new Exception("user doesnot exists");
-        }
-        User user = optionalUser.get();
-        if(!user.getResetKey().equals(forgetPasswordRequest.getResetKey())){
-            throw new Exception("wrong reset key");
-        }
-        user.setPassword(passwordEncoder.encode(forgetPasswordRequest.getPassword()));
-        tokenRepository.deleteAllByUsername(username);
-        userRepository.save(user);
+    @PostMapping("{username}/forgot")
+    public ResponseEntity<?> changePassword(@PathVariable String username,@RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
+        customUserDetailsManager.changePassword("", changePasswordRequest.getNewPassword());
         return ResponseEntity.ok().build();
     }
 

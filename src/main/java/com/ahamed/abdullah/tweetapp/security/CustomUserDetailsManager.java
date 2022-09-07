@@ -43,7 +43,6 @@ public class CustomUserDetailsManager implements UserDetailsManager {
             newUser.setUsername(user.getUsername());
             String encodedPassword = passwordEncoder.encode(user.getPassword());
             newUser.setPassword(encodedPassword);
-            newUser.setResetKey(user.getResetKey());
             newUser.setFirstName(user.getFirstName());
             newUser.setLastName(user.getLastName());
             newUser.setEmail(user.getEmail());
@@ -73,9 +72,6 @@ public class CustomUserDetailsManager implements UserDetailsManager {
             throw new UsernameNotFoundException("user does not exists");
         }
         User updateUser = user.get();
-        if (!passwordEncoder.matches(oldPassword, user.get().getPassword())) {
-            throw new AuthenticationCredentialsNotFoundException("old password does not match");
-        }
 
         String encodedPassword = passwordEncoder.encode(newPassword);
         updateUser.setPassword(encodedPassword);

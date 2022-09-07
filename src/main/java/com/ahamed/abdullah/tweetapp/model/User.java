@@ -19,7 +19,5 @@ public class User {
     private String lastName;
     private String password;
     private String email;
-    @NotBlank(message = "reset-key cannot be empty")
-    private String resetKey;
 
 }
