@@ -3,8 +3,8 @@ package com.ahamed.abdullah.tweetapp.security;
 import com.ahamed.abdullah.tweetapp.model.User;
 import com.ahamed.abdullah.tweetapp.repository.TokenRepository;
 import com.ahamed.abdullah.tweetapp.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class CustomUserDetailsManager implements UserDetailsManager {
 
     private final UserRepository userRepository;
@@ -46,6 +47,7 @@ public class CustomUserDetailsManager implements UserDetailsManager {
             newUser.setFirstName(user.getFirstName());
             newUser.setLastName(user.getLastName());
             newUser.setEmail(user.getEmail());
+            log.info("Saving the new user into DB");
             userRepository.save(newUser);
         } catch (DuplicateKeyException exception) {
             throw new RuntimeException("duplicate key");
@@ -86,7 +88,6 @@ public class CustomUserDetailsManager implements UserDetailsManager {
     }
 
     @Override
-
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> user = userRepository.findByUsername(username);
         if (user.isEmpty()) {

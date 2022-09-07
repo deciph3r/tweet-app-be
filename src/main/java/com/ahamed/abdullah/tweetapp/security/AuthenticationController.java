@@ -48,11 +48,13 @@ public class AuthenticationController {
 
     @GetMapping("username/{key}")
     public ResponseEntity<Boolean> findIfUsernameExist(@PathVariable String key){
+        log.info("Finding username already existing with the key {}",key);
         return ResponseEntity.ok().body(userRepository.existsByUsername(key));
     }
 
     @PostMapping("login")
     public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {
+        log.info("Attempting login");
         try {
             Authentication authenticate = authenticationManager
                     .authenticate(
@@ -61,14 +63,15 @@ public class AuthenticationController {
                             )
                     );
             UserDetails user = (CustomUserDetails) authenticate.getPrincipal();
-
+            log.info("Creating refresh Token");
             Token refreshToken = new Token(user.getUsername(), UUID.randomUUID().toString());
             tokenRepository.save(refreshToken);
-
+            log.info("Creating access Token");
             String token = jwtTokenProvider.createToken(user.getUsername());
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("refresh-token", refreshToken.getToken());
             responseBody.put("access-token", token);
+            log.info("Sending tokens to the user");
             return ResponseEntity.ok().body(responseBody);
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -78,6 +81,7 @@ public class AuthenticationController {
 
     @PostMapping("register")
     public ResponseEntity<?> signup(@RequestBody @Valid User userRequest) throws RuntimeException {
+        log.info("Creating a new user");
         User newUser = new User();
         newUser.setUsername(userRequest.getUsername());
         newUser.setPassword(userRequest.getPassword());
@@ -91,6 +95,7 @@ public class AuthenticationController {
 
     @PostMapping("{username}/forgot")
     public ResponseEntity<?> changePassword(@PathVariable String username,@RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
+        log.info("Changing the password for an user");
         customUserDetailsManager.changePassword("", changePasswordRequest.getNewPassword());
         return ResponseEntity.ok().build();
     }
@@ -98,36 +103,21 @@ public class AuthenticationController {
 
     @PostMapping("sign-out")
     public ResponseEntity<?> signout(@RequestBody @Valid RefreshTokenRequest refreshTokenRequest) {
+        log.info("Signing out an user and Removing their refresh token from DB");
         tokenRepository.deleteByToken(refreshTokenRequest.getRefreshToken());
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("invalidate-all-access-token")
-    public ResponseEntity<?> invalidateAllAccessToken(@RequestBody @Valid InvalidateAllAccessTokenRequest invalidateAllAccessTokenRequest) {
-        Authentication currentUser = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails user = customUserDetailsManager.loadUserByUsername(currentUser.getName());
-        try {
-            authenticationManager
-                    .authenticate(
-                            new UsernamePasswordAuthenticationToken(
-                                    user.getUsername(), invalidateAllAccessTokenRequest.getPassword()
-                            )
-                    );
-        } catch (AuthenticationException e) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        tokenRepository.deleteAllByUsername(user.getUsername());
-        return ResponseEntity.ok().build();
-    }
 
     @PostMapping ("createAccessToken")
     public ResponseEntity<String> createAccessToken(@RequestBody @Valid RefreshTokenRequest refreshToken) {
+        log.info("Creating an access token");
         Optional<Token> optionalToken = tokenRepository.findByToken(refreshToken.getRefreshToken());
         if (optionalToken.isEmpty()) {
             return ResponseEntity.badRequest().body("unauthorized");
         }
         UserDetails userDetails = customUserDetailsManager.loadUserByUsername(optionalToken.get().getUsername());
+        log.info("Found the user belonging to the refresh token and creating new access token for them");
         String token = jwtTokenProvider.createToken(userDetails.getUsername());
 
         return ResponseEntity.ok().body(token);
