@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-slim
+FROM amazoncorretto:11.0.16
 
 LABEL maintainer="ahamed.abdullah00772@gmail.com"
 LABEL author="Ahamed Abdullah"
