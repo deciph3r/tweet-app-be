@@ -10,6 +10,8 @@ import com.ahamed.abdullah.tweetapp.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,10 +42,11 @@ public class TweetController {
     LikeRepository likeRepository;
 
     @GetMapping("all")
-    public List<Tweet> getAllTweets(){
+    public List<Tweet> getAllTweets(@RequestParam(defaultValue = "0") int page){
         log.info("Retrieving all Tweets from the DB");
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return tweetRepository.findAll(Sort.by(Sort.Direction.DESC,"postTime")).parallelStream().map((e)-> {
+        Pageable pageable = PageRequest.of(page, 6,Sort.by(Sort.Direction.DESC,"postTime"));
+        return tweetRepository.findAll(pageable).stream().parallel().map((e)-> {
             e.setLikes(likeRepository.countByLikedTweet(e.getId()));
             e.setLikedByUser(likeRepository.existsByLikedTweetAndLikedBy(e.getId(),username));
             if(e.getRepliedTo()!=null) {
@@ -57,10 +60,11 @@ public class TweetController {
     }
 
     @GetMapping("{username}")
-    public List<Tweet> getAllTweetsOfUser(@PathVariable String username){
+    public List<Tweet> getAllTweetsOfUser(@PathVariable String username,@RequestParam(defaultValue = "0") int page){
         log.info("Retrieving all tweets of {} from DB",username);
         String requestedUser = SecurityContextHolder.getContext().getAuthentication().getName();
-        return tweetRepository.findByUsernameOrderByPostTimeDesc(username).parallelStream().map((e)-> {
+        Pageable pageable = PageRequest.of(page, 6);
+        return tweetRepository.findByUsernameOrderByPostTimeDesc(username,pageable).stream().parallel().map((e)-> {
                     e.setLikes(likeRepository.countByLikedTweet(e.getId()));
                     e.setLikedByUser(likeRepository.existsByLikedTweetAndLikedBy(e.getId(),requestedUser));
                     if(e.getRepliedTo()!=null) {
