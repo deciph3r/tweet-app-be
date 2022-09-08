@@ -33,11 +33,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http = http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
 
         http = http.authorizeRequests()//
-                .antMatchers("/login").permitAll()//
-                .antMatchers("/register").permitAll()//
-                .antMatchers("/createAccessToken").permitAll()//
+                .antMatchers("/api/v1.0/tweets/login").permitAll()//
+                .antMatchers("/api/v1.0/tweets/register").permitAll()//
+                .antMatchers("/api/v1.0/tweets/createAccessToken").permitAll()//
                 .antMatchers("/h2-console/**/**").permitAll()
-                .antMatchers("/username/**").permitAll()
+                .antMatchers("/api/v1.0/tweets/username/**").permitAll()
                 .anyRequest().authenticated().and();
 
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

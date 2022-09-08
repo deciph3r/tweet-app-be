@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api/v1.0/tweets/")
 @Slf4j
 public class TweetController {
     @Autowired
