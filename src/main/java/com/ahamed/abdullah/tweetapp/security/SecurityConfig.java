@@ -37,6 +37,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/v1.0/tweets/register").permitAll()//
                 .antMatchers("/api/v1.0/tweets/createAccessToken").permitAll()//
                 .antMatchers("/h2-console/**/**").permitAll()
+                .antMatchers("/actuator/health").permitAll()
                 .antMatchers("/api/v1.0/tweets/username/**").permitAll()
                 .anyRequest().authenticated().and();
 
